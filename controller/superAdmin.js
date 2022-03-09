@@ -3,10 +3,11 @@ const bcrypt = require("bcryptjs");
 const { genSalt } = require('bcrypt');
 const  nodemailer  = require('nodemailer')
 const { issueJWT } = require('../utils/jwt');
-const params = require('params')
+const params = require('params');
+const otpGenerator = require('otp-generator');
 
 
-//======================================mail function===================================//
+//======================================mail function for reset password===================================//
 function sendEmail (email,token){
     var transporter = nodemailer.createTransport({
         service: "Gmail",
@@ -39,6 +40,43 @@ function sendEmail (email,token){
         }
     })
 }
+//==================================mail function for account verification=========//
+
+function sendVmail(email,token,otp){
+    var transporter = nodemailer.createTransport({
+        service: "Gmail",
+        auth:{
+            user:"rkawachaleems@gmail.com",
+            pass:"Rushabh@471"
+        }
+    })
+    var mailOptions = {
+        from: "rkawachaleems@gmail.com",
+        to:"rushabhkawachale@gmail.com",
+        subject:"Account activation",
+        html:`
+        <html>
+        <header></header>
+        <body>
+        <p>Your validation code is ${otp}
+        <b>Please click on this link to activate your account
+        <a href="http://localhost:8080/api/v1/superAdmin/verifyAccount/${token}">Link....</a></b></p>``
+        </body>
+        </html>
+        `
+    }
+    transporter.sendMail(mailOptions,function(error,info){
+        if (error){
+            console.log(error)
+        }else{
+            console.log("email sent for account activation", email + info.response)
+        }
+    })
+
+} 
+
+
+
 
 //===========================================create=======================================//
 
@@ -55,23 +93,35 @@ module.exports.createSuperAdmin = async(req,res)=>{
                 message:"this email already exist,please try with other email"
             })
     }else{
+        let payload = {
+            email:req.body.email
+        }
+        let token = await issueJWT(payload)
+        console.log(token,"token");
+        let otp = otpGenerator.generate(6, { alphabets: false, upperCase: false, specialChars: false });
+        console.log(otp,"otp");
         let hashPassword = await bcrypt.hash(password,await bcrypt.genSalt(10));
         let data = new superAdmin({
             name,
             email,
             password:hashPassword,
             address,
-            phone
+            phone,
+            remember_token:token,
+            otp:otp
         })
 
         let createSuperAdmin = await data.save()
         console.log(createSuperAdmin,"createSuperAdmin")
+        
 
         if (createSuperAdmin){
+            var emailPart = sendVmail(email,token,otp)
             res.json({
                 status:200,
                 success:true,
-                message:"super admin created successfullyS"
+                message:"super admin created successfullyS",
+                
             })
         }else{
             res.status(400).json({
@@ -90,17 +140,65 @@ module.exports.createSuperAdmin = async(req,res)=>{
         })
     }
 }
+//===================================verify account======================================//
+
+module.exports.verifyAccount = async(req,res)=>{
+    try{
+        let token = req.params.token
+        let {otp} = req.body
+        let findSuperAdmin = await superAdmin.findOne({remember_token:token})
+        if(findSuperAdmin){
+            let response = await superAdmin.findOne({otp:otp})
+            console.log(response,"response")
+            if(response){
+            let update = await superAdmin.findOneAndUpdate({remember_token:token},{
+                $set:{
+                    isVerified:"true"
+                }
+            })
+            res.json({
+                status:200,
+                success:true,
+                message:"User verified account activated"
+            })
+        }else{
+            res.status(400).json({
+                success:false,
+                message:"something went wrong"
+            })
+        }
+    }else{
+        res.status(400).json({
+            success:false,
+            message:"invalid otp"
+        })
+    }
+         
+    }catch(error){
+        res.status(400).json({
+            success:false,
+            message:error.message
+        })
+    }
+}
+
+
+
+
+
 //===================================superAdmin login===================================//
 module.exports.login = async (req,res)=>{
     try{
-    let {email,password}= req.body;
+    let {email,password}= req.body; 
     let login = await superAdmin.findOne({email:email})
-    console.log(login,"login"); 
+   let isVerify = login.isVerified
+    if(isVerify==true){
+   
     if(login != null){
         let comparePassword = await bcrypt.compare(password, login.password)
         if(comparePassword){ 
             let token = await issueJWT(login);
-            console.log(token,"super admin logged in")
+            
                     res.json({
                         status: 200,
                         success: true,
@@ -119,6 +217,12 @@ module.exports.login = async (req,res)=>{
             message:"UnAuthorized"
         })
     }
+}else{
+    res.status(400).json({
+        success:false,
+        message:"User account is not verified "
+    })
+}
 }catch(error){
         res.status(400).json({
             success:false,
@@ -224,51 +328,7 @@ module.exports.showAllSuperAdmin = async(req,res)=>{
         })
     }
 }
-//===================================change password================================//
-// module.exports.changePassword = async (req,res)=>{
-//     try{
-//         let {id} = req.user
-//          let {
-//              newPassword,
-//              confirmNewPassword
-//          }= req.body
-       
-//          if(newPassword==confirmNewPassword){
-//         let hashPassword = await bcrypt.hash(newPassword,await bcrypt.genSalt(10))
-//          let findSuperAdmin = await superAdmin.findOneAndUpdate({_id:id},{
-//             $set :{
-//                 newPassword:    hashPassword
-                
-//          }})
-         
-//          if(findSuperAdmin){
-//             res.json({
-//                 status:200,
-//                 success:true,
-//                 message:"password changed successfully"
-//             })
-//          }else{
-//              res.status(400).json({
-//                  success:false,
-//                  message:"something went wrong"
-//              })
-//          }
-         
-//          }else{
-//              res.status(400).json({
-//                  success:false,
-//                  message: "passwords does not match"
-//              })
-//             }
-         
-//     }catch(err){
-//         res.status(400).json({
-//             success:false,
-//             message: err.message
-//         })
-//     }
-// }
-//======================================change password==========================//
+//==============================================change password=======================//
 module.exports.changePassword = async(req,res)=>{
     try{
             let {oldPassword,newPassword,confirmNewPassword} = req.body
@@ -317,7 +377,7 @@ module.exports.changePassword = async(req,res)=>{
 
 
 
-//=======================================forget resset==========================//
+//=======================================forget reset==========================//
 module.exports.forgetReset = async(req,res)=>{
         try{
             let {email} = req.body

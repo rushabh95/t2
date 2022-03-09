@@ -11,5 +11,6 @@ router.get('/showAllSuperAdmin',verifyTokenFn, controller.superAdmin.showAllSupe
 router.put('/changePassword',verifyTokenFn,controller.superAdmin.changePassword)
 router.post('/forgetReset',verifyTokenFn,controller.superAdmin.forgetReset)
 router.post('/forgetChange/:token',controller.superAdmin.forgetChange)
+router.post('/verifyAccount/:token',controller.superAdmin.verifyAccount)
 
 module.exports = router;
