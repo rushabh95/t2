@@ -19,7 +19,7 @@ function sendEmail (email,token){
 
     var mailOptions = {
         from: "rkawachaleems@gmail.com",
-        to:"rk@gmail.com",
+        to:email,
         subject:"reset password",
         html:`
         <html>
@@ -52,7 +52,7 @@ function sendVmail(email,token,otp){
     })
     var mailOptions = {
         from: "rkawachaleems@gmail.com",
-        to:"rushabhkawachale@gmail.com",
+        to:email,
         subject:"Account activation",
         html:`
         <html>
@@ -60,7 +60,7 @@ function sendVmail(email,token,otp){
         <body>
         <p>Your validation code is ${otp}
         <b>Please click on this link to activate your account
-        <a href="http://localhost:8080/api/v1/superAdmin/verifyAccount/${token}">Link....</a></b></p>``
+        <a href="http://localhost:8080/api/v1/superAdmin/verifyAccount/${token}">Link....</a></b></p>
         </body>
         </html>
         `
@@ -72,7 +72,7 @@ function sendVmail(email,token,otp){
             console.log("email sent for account activation", email + info.response)
         }
     })
-
+return ("email sent")
 } 
 
 
@@ -117,6 +117,7 @@ module.exports.createSuperAdmin = async(req,res)=>{
 
         if (createSuperAdmin){
             var emailPart = sendVmail(email,token,otp)
+            console.log(emailPart,"emailPart");
             res.json({
                 status:200,
                 success:true,
@@ -469,5 +470,3 @@ module.exports.forgetChange = async(req,res)=>{
         })
     }
 }
-
-
