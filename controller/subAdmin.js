@@ -46,7 +46,17 @@ function sendEmail(email,token){
 
 module.exports.createSubAdmin = async(req,res)=>{
     try{
-     let {name,email,password,phone,address} = req.body
+     let {
+         name,
+         email,
+         password,
+         phone,
+         address,
+         permission_to_add_company,
+         permission_to_view_company_list,
+         permission_to_add_plans,
+         permission_to_view_plans_list
+                                    } = req.body
      let findEmail = await subAdmin.findOne({email:email})
      console.log(findEmail,"findEmail");
      let hashPassword = await bcrypt.hash(password,await bcrypt.genSalt(10))
@@ -62,7 +72,12 @@ module.exports.createSubAdmin = async(req,res)=>{
              email:email,
              password:hashPassword,
              phone:phone,
-             address:address
+             address:address,
+             permission_to_add_company:permission_to_add_company,
+             permission_to_view_company_list:permission_to_view_company_list,
+             permission_to_add_plans:permission_to_add_plans,
+             permission_to_view_plans_list:permission_to_view_plans_list
+             
          })
 
          let createSubAdmin = await data.save();

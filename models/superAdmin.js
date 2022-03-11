@@ -19,7 +19,7 @@ var superAdminSchema = new mongoose.Schema({
     isVerified:{ type:Boolean,
               default:false},
     created_at:{type:Date,
-               default:Date.now()},
+               default:Date.now},
     updated_at:{type:Date}
 })
 

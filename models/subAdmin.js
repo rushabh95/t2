@@ -10,8 +10,12 @@ var subAdminSchema = new mongoose.Schema({
         default:""},
     password:{type:String},
     remember_token:{type:""},
+    permission_to_add_plans:{type:Boolean},
+    permission_to_add_company:{type:Boolean},
+    permission_to_view_plans:{type:Boolean},
+    permission_to_view_company:{type:Boolean},
     created_at:{type:Date,
-        default:Date.now()},
+        default:Date.now},
     updated_at:{type:Date}
 })
 
