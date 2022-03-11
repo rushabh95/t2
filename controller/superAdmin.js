@@ -193,6 +193,7 @@ module.exports.login = async (req,res)=>{
     let {email,password}= req.body; 
     let login = await superAdmin.findOne({email:email})
    let isVerify = login.isVerified
+   console.log(isVerify,"isVerify")
     if(isVerify==true){
    
     if(login != null){
